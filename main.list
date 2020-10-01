@@ -247,198 +247,283 @@
 229+  80F5
 # file closed: ./lib/output.z80
   6   80F5
-  7   80F5              Main:
-  8   80F5                  ; pain incoming
-  9   80F5 CD 4C 81         call PrepScreen
- 10   80F8 CD 55 81         call PrepTrack
- 11   80FB
- 12   80FB CD 3B 81         call FillTurnBack
- 13   80FE CD 33 81         call DrawString
- 14   8101
- 15   8101 CD 06 81         call AnimLoop
- 16   8104 C9               ret
- 17   8105
- 18   8105 50           AnimTickDelay: db 80 ; delay for tick updates
- 19   8106
- 20   8106              ; Animation loop!
- 21   8106              AnimLoop:
- 22   8106 CD 75 81         call FillTrackStart
- 23   8109
- 24   8109                  ; This calms the tick updates by spacing them out
- 25   8109 3A 05 81         ld a, (AnimTickDelay)
- 26   810C FE 00            cp 0
- 27   810E 20 08            jr nz, AnimLoopDone
- 28   8110 3E 50            ld a, 80
- 29   8112 32 05 81         ld (AnimTickDelay), a
- 30   8115
- 31   8115                  ; Tick updates
- 32   8115 CD 67 81         call TrackPaletteTick
- 33   8118
- 34   8118              AnimLoopDone:
- 35   8118 3A 05 81         ld a, (AnimTickDelay)
- 36   811B 3D               dec a
- 37   811C 32 05 81         ld (AnimTickDelay), a
- 38   811F
- 39   811F C3 06 81         jp AnimLoop
- 40   8122
- 41   8122              ; Draws the * TURN BACK * text
- 42   8122 09 00 2A 20  TurnBackStr: db $9, $0, "* TURN  BACK *", $FF
- 42   8126 54 55 52 4E
- 42   812A 20 20 42 41
- 42   812E 43 4B 20 2A
- 42   8132 FF
- 43   8133              DrawString:
- 44   8133 DD 21 22 81      ld ix, TurnBackStr
- 45   8137 CD 24 80         call Print_String
- 46   813A C9               ret
- 47   813B
- 48   813B              FillTurnBack:
- 49   813B 06 08            ld b, 8
- 50   813D 0E 00            ld c, 0
- 51   813F CD B8 81         call GetAttrAddress ; HL = address
- 52   8142
- 53   8142 0E 10            ld c, 16 ; width
- 54   8144 06 01            ld b, 1 ; height
- 55   8146 3E C2            ld a, %11000010 ; bright red, flashing
- 56   8148 CD 14 80         call Fill_Attr
- 57   814B C9               ret
- 58   814C
- 59   814C              ; fill screen with black
- 60   814C              PrepScreen:
- 61   814C 3E 00            ld a, %00000000 ; black
- 62   814E CD 00 80         call Clear_Screen
- 63   8151 CD 9B 22         call 8859 ; border color
- 64   8154 C9               ret
- 65   8155
- 66   8155              ; fills out the area that will be next to the track
- 67   8155              PrepTrack:
- 68   8155 06 00            ld b, 0
- 69   8157 0E 60            ld c, 96 ; 12 * 8 (8 "pixels" per block)
- 70   8159 CD B8 81         call GetAttrAddress
- 71   815C
- 72   815C 0E 20            ld c, 32
- 73   815E 06 0C            ld b, 12
- 74   8160 3E 3F            ld a, %00111111 ; "dark" white = gray
- 75   8162 CD 14 80         call Fill_Attr
- 76   8165 C9               ret
- 77   8166
- 78   8166 00           TrackPaletteOffset: db 0 ; 0, 1 or 2
- 79   8167
- 80   8167              ; Update the palette offset
- 81   8167              TrackPaletteTick:
- 82   8167 3A 66 81         ld a, (TrackPaletteOffset)
- 83   816A 3C               inc a ; increment
- 84   816B FE 03            cp 3 ; if a == 3, Z = true
- 85   816D 20 02            jr nz, TrackPaletteTickDone
- 86   816F
- 87   816F                  ; uh oh! offset = 3!! oopsies!
- 88   816F 3E 00            ld a, 0
- 89   8171
- 90   8171              TrackPaletteTickDone:
- 91   8171 32 66 81         ld (TrackPaletteOffset), a ; put back
- 92   8174 C9               ret
- 93   8175
- 94   8175              FillTrackStart:
- 95   8175 06 0C            ld b, 12 ; b is the loop counter
- 96   8177              FillTrackLoop:
- 97   8177 CD 8C 81         call FillTrackLoopBody
- 98   817A
- 99   817A 10 FB            djnz FillTrackLoop ; loop back if b != 0
-100   817C
-101   817C C9               ret
-102   817D
-103   817D              ; track colors!
-104   817D 52           TrackPalette: db %01010010 ; red
-105   817E 76                         db %01110110 ; yellow
-106   817F 64                         db %01100100 ; green
-107   8180 52                         db %01010010 ; repeating, so that i don't need modulo
-108   8181 76                         db %01110110
-109   8182 64                         db %01100100
-110   8183 52                         db %01010010
-111   8184 76                         db %01110110
-112   8185 64                         db %01100100
-113   8186 52                         db %01010010
-114   8187 76                         db %01110110
-115   8188 64                         db %01100100
-116   8189 52                         db %01010010
-117   818A 76                         db %01110110
-118   818B 64                         db %01100100
-119   818C
-120   818C              FillTrackLoopBody:
-121   818C C5               push bc ; this puts b (and c) onto the stack
-122   818D                          ; that will preserve the loop counter
-123   818D
-124   818D                  ; Calculating the Y position of the track block
-125   818D 78               ld a, b
-126   818E 17               rla ; multiply by 8 by rotating left 3 times
-127   818F 17               rla
-128   8190 17               rla
-129   8191 C6 58            add 88
-130   8193 4F               ld c, a
-131   8194
-132   8194                  ; Calculating the X position of the track block
-133   8194 3E 0C            ld a, 12
-134   8196 90               sub b
-135   8197 47               ld b, a
-136   8198
-137   8198 CD B8 81         call GetAttrAddress
-138   819B
-139   819B                  ; Pick the color from the palette based on X
-140   819B E5               push hl ; hl has the address!!
-141   819C 21 7D 81         ld hl, TrackPalette
-142   819F 7D               ld a, l ; manipulation time!
-143   81A0 80               add b ; different colors!
-144   81A1
-145   81A1                  ; Adding the "offset"
-146   81A1 E5               push hl
-147   81A2 2A 66 81         ld hl, (TrackPaletteOffset)
-148   81A5 85               add l ; offset!
-149   81A6 E1               pop hl
-150   81A7
-151   81A7 6F               ld l, a
-152   81A8 7E               ld a, (hl)
-153   81A9 E1               pop hl ; oof!
-154   81AA F5               push af ; store the color for a sec
-155   81AB
-156   81AB                  ; Calculating the width
-157   81AB                  ; Width = 32 - x - x (x = "margin")
-158   81AB 3E 20            ld a, 32
-159   81AD 90               sub b
-160   81AE 90               sub b
-161   81AF 4F               ld c, a
-162   81B0                  ; Height = 1
-163   81B0 06 01            ld b, 1
-164   81B2
-165   81B2 F1               pop af ; get that color back
-166   81B3 CD 14 80         call Fill_Attr
-167   81B6
-168   81B6 C1               pop bc ; bring back the loop counter
-169   81B7 C9               ret
-170   81B8
-171   81B8              ; Get address of block in attribute map
-172   81B8              ; BC - XY
-173   81B8              ; address -> HL
-174   81B8              ; https://www.chibiakumas.com/z80/simplesamples.php#LessonS2
-175   81B8              GetAttrAddress:
-176   81B8 79               ld a, C
-177   81B9 E6 C0                and %11000000
-178   81BB 07                   rlca
-179   81BC 07                   rlca
-180   81BD C6 58                add $58
-181   81BF 57                   ld d, a
-182   81C0 79               ld a, C
-183   81C1 E6 38            and %00111000
-184   81C3 07               rlca
-185   81C4 07               rlca
-186   81C5
-187   81C5 80               add b
-188   81C6 5F               ld e, a
-189   81C7
-190   81C7 D5               push de
-191   81C8 E1               pop hl
-192   81C9 C9               ret
-193   81CA
-194   81CA                  savesna "./main.sna", Main
+  7   80F5                  include "./track.asm"
+# file opened: ./track.asm
+  1+  80F5              ; TRACK DRAWING
+  2+  80F5
+  3+  80F5              ; fills out the area that will be next to the track
+  4+  80F5              PrepTrack:
+  5+  80F5 06 00            ld b, 0
+  6+  80F7 0E 60            ld c, 96 ; 12 * 8 (8 "pixels" per block)
+  7+  80F9 CD DC 81         call GetAttrAddress
+  8+  80FC
+  9+  80FC 0E 20            ld c, 32
+ 10+  80FE 06 0C            ld b, 12
+ 11+  8100 3E 3F            ld a, %00111111 ; "dark" white = gray
+ 12+  8102 CD 14 80         call Fill_Attr
+ 13+  8105 C9               ret
+ 14+  8106
+ 15+  8106 00           TrackPaletteOffset: db 0 ; 0, 1 or 2
+ 16+  8107
+ 17+  8107              ; Update the palette offset
+ 18+  8107              TrackPaletteTick:
+ 19+  8107 3A 06 81         ld a, (TrackPaletteOffset)
+ 20+  810A 3C               inc a ; increment
+ 21+  810B FE 03            cp 3 ; if a == 3, Z = true
+ 22+  810D 20 02            jr nz, TrackPaletteTickDone
+ 23+  810F
+ 24+  810F                  ; uh oh! offset = 3!! oopsies!
+ 25+  810F 3E 00            ld a, 0
+ 26+  8111
+ 27+  8111              TrackPaletteTickDone:
+ 28+  8111 32 06 81         ld (TrackPaletteOffset), a ; put back
+ 29+  8114 C9               ret
+ 30+  8115
+ 31+  8115              FillTrackStart:
+ 32+  8115 06 0C            ld b, 12 ; b is the loop counter
+ 33+  8117              FillTrackLoop:
+ 34+  8117 CD 2C 81         call FillTrackLoopBody
+ 35+  811A
+ 36+  811A 10 FB            djnz FillTrackLoop ; loop back if b != 0
+ 37+  811C
+ 38+  811C C9               ret
+ 39+  811D
+ 40+  811D              ; track colors!
+ 41+  811D 52           TrackPalette: db %01010010 ; red
+ 42+  811E 76                         db %01110110 ; yellow
+ 43+  811F 64                         db %01100100 ; green
+ 44+  8120 52                         db %01010010 ; repeating, so that i don't need modulo
+ 45+  8121 76                         db %01110110
+ 46+  8122 64                         db %01100100
+ 47+  8123 52                         db %01010010
+ 48+  8124 76                         db %01110110
+ 49+  8125 64                         db %01100100
+ 50+  8126 52                         db %01010010
+ 51+  8127 76                         db %01110110
+ 52+  8128 64                         db %01100100
+ 53+  8129 52                         db %01010010
+ 54+  812A 76                         db %01110110
+ 55+  812B 64                         db %01100100
+ 56+  812C
+ 57+  812C              FillTrackLoopBody:
+ 58+  812C C5               push bc ; this puts b (and c) onto the stack
+ 59+  812D                          ; that will preserve the loop counter
+ 60+  812D
+ 61+  812D                  ; Calculating the Y position of the track block
+ 62+  812D 78               ld a, b
+ 63+  812E 17               rla ; multiply by 8 by rotating left 3 times
+ 64+  812F 17               rla
+ 65+  8130 17               rla
+ 66+  8131 C6 58            add 88
+ 67+  8133 4F               ld c, a
+ 68+  8134
+ 69+  8134                  ; Calculating the X position of the track block
+ 70+  8134 3E 0C            ld a, 12
+ 71+  8136 90               sub b
+ 72+  8137 47               ld b, a
+ 73+  8138
+ 74+  8138 CD DC 81         call GetAttrAddress
+ 75+  813B
+ 76+  813B                  ; Pick the color from the palette based on X
+ 77+  813B E5               push hl ; hl has the address!!
+ 78+  813C 21 1D 81         ld hl, TrackPalette
+ 79+  813F 7D               ld a, l ; manipulation time!
+ 80+  8140 80               add b ; different colors!
+ 81+  8141
+ 82+  8141                  ; Adding the "offset"
+ 83+  8141 E5               push hl
+ 84+  8142 2A 06 81         ld hl, (TrackPaletteOffset)
+ 85+  8145 85               add l ; offset!
+ 86+  8146 E1               pop hl
+ 87+  8147
+ 88+  8147 6F               ld l, a
+ 89+  8148 7E               ld a, (hl)
+ 90+  8149 E1               pop hl ; oof!
+ 91+  814A F5               push af ; store the color for a sec
+ 92+  814B
+ 93+  814B                  ; Calculating the width
+ 94+  814B                  ; Width = 32 - x - x (x = "margin")
+ 95+  814B 3E 20            ld a, 32
+ 96+  814D 90               sub b
+ 97+  814E 90               sub b
+ 98+  814F 4F               ld c, a
+ 99+  8150                  ; Height = 1
+100+  8150 06 01            ld b, 1
+101+  8152
+102+  8152 F1               pop af ; get that color back
+103+  8153 CD 14 80         call Fill_Attr
+104+  8156
+105+  8156 C1               pop bc ; bring back the loop counter
+106+  8157 C9               ret
+# file closed: ./track.asm
+  8   8158                  include "./sky.asm"
+# file opened: ./sky.asm
+  1+  8158              ; Draws the sky "gradient"
+  2+  8158              PrepSky:
+  3+  8158 06 00            ld b, 0
+  4+  815A 0E 58            ld c, 88
+  5+  815C CD DC 81         call GetAttrAddress ; HL = address
+  6+  815F
+  7+  815F 0E 20            ld c, 32 ; width
+  8+  8161 06 01            ld b, 1 ; height
+  9+  8163 3E 48            ld a, %01001000 ; bright blue
+ 10+  8165 CD 14 80         call Fill_Attr
+ 11+  8168
+ 12+  8168 06 00            ld b, 0
+ 13+  816A 0E 50            ld c, 80
+ 14+  816C CD DC 81         call GetAttrAddress ; HL = address
+ 15+  816F
+ 16+  816F 0E 20            ld c, 32 ; width
+ 17+  8171 06 01            ld b, 1 ; height
+ 18+  8173 3E 08            ld a, %00001000 ; dark blue
+ 19+  8175 CD 14 80         call Fill_Attr
+ 20+  8178
+ 21+  8178 C9               ret
+# file closed: ./sky.asm
+  9   8179
+ 10   8179              Main:
+ 11   8179                  ; pain incoming
+ 12   8179 CD D3 81         call PrepScreen
+ 13   817C CD F5 80         call PrepTrack
+ 14   817F CD 58 81         call PrepSky
+ 15   8182
+ 16   8182 CD C2 81         call FillTurnBack
+ 17   8185 CD BA 81         call DrawString
+ 18   8188
+ 19   8188 CD 8D 81         call AnimLoop
+ 20   818B C9               ret
+ 21   818C
+ 22   818C 50           AnimTickDelay: db 80 ; delay for tick updates
+ 23   818D
+ 24   818D              ; Animation loop!
+ 25   818D              AnimLoop:
+ 26   818D CD 15 81         call FillTrackStart
+ 27   8190
+ 28   8190                  ; This calms the tick updates by spacing them out
+ 29   8190 3A 8C 81         ld a, (AnimTickDelay)
+ 30   8193 FE 00            cp 0
+ 31   8195 20 08            jr nz, AnimLoopDone
+ 32   8197 3E 50            ld a, 80
+ 33   8199 32 8C 81         ld (AnimTickDelay), a
+ 34   819C
+ 35   819C                  ; Tick updates
+ 36   819C CD 07 81         call TrackPaletteTick
+ 37   819F
+ 38   819F              AnimLoopDone:
+ 39   819F 3A 8C 81         ld a, (AnimTickDelay)
+ 40   81A2 3D               dec a
+ 41   81A3 32 8C 81         ld (AnimTickDelay), a
+ 42   81A6
+ 43   81A6 C3 8D 81         jp AnimLoop
+ 44   81A9
+ 45   81A9              ; Draws the * TURN BACK * text
+ 46   81A9 09 00 2A 20  TurnBackStr: db $9, $0, "* TURN  BACK *", $FF
+ 46   81AD 54 55 52 4E
+ 46   81B1 20 20 42 41
+ 46   81B5 43 4B 20 2A
+ 46   81B9 FF
+ 47   81BA              DrawString:
+ 48   81BA DD 21 A9 81      ld ix, TurnBackStr
+ 49   81BE CD 24 80         call Print_String
+ 50   81C1 C9               ret
+ 51   81C2
+ 52   81C2              FillTurnBack:
+ 53   81C2 06 08            ld b, 8
+ 54   81C4 0E 00            ld c, 0
+ 55   81C6 CD DC 81         call GetAttrAddress ; HL = address
+ 56   81C9
+ 57   81C9 0E 10            ld c, 16 ; width
+ 58   81CB 06 01            ld b, 1 ; height
+ 59   81CD 3E C2            ld a, %11000010 ; bright red, flashing
+ 60   81CF CD 14 80         call Fill_Attr
+ 61   81D2 C9               ret
+ 62   81D3
+ 63   81D3              ; fill screen with black
+ 64   81D3              PrepScreen:
+ 65   81D3 3E 07            ld a, %00000111 ; black, white "ink"
+ 66   81D5 CD 00 80         call Clear_Screen
+ 67   81D8 CD 9B 22         call 8859 ; border color
+ 68   81DB C9               ret
+ 69   81DC
+ 70   81DC              ; Get address of block in attribute map
+ 71   81DC              ; BC - XY
+ 72   81DC              ; address -> HL
+ 73   81DC              ; https://www.chibiakumas.com/z80/simplesamples.php#LessonS2
+ 74   81DC              GetAttrAddress:
+ 75   81DC 79               ld a, C
+ 76   81DD E6 C0                and %11000000
+ 77   81DF 07                   rlca
+ 78   81E0 07                   rlca
+ 79   81E1 C6 58                add $58
+ 80   81E3 57                   ld d, a
+ 81   81E4 79               ld a, C
+ 82   81E5 E6 38            and %00111000
+ 83   81E7 07               rlca
+ 84   81E8 07               rlca
+ 85   81E9
+ 86   81E9 80               add b
+ 87   81EA 5F               ld e, a
+ 88   81EB
+ 89   81EB D5               push de
+ 90   81EC E1               pop hl
+ 91   81ED C9               ret
+ 92   81EE
+ 93   81EE              ; Get sprite address
+ 94   81EE              ; BC - XY
+ 95   81EE              ; DE - address
+ 96   81EE              ; https://www.chibiakumas.com/z80/simplesamples.php#LessonS2
+ 97   81EE              GetScreenPos:
+ 98   81EE 79               ld a, c
+ 99   81EF E6 38            and %00111000
+100   81F1 07               rlca
+101   81F2 07               rlca
+102   81F3 B0               or b
+103   81F4 5F               ld e, a
+104   81F5 79               ld a, c
+105   81F6 E6 07            and %00000111
+106   81F8 57               ld d, a
+107   81F9 79               ld a, c
+108   81FA E6 C0            and %11000000
+109   81FC 0F               rrca
+110   81FD 0F               rrca
+111   81FE 0F               rrca
+112   81FF B2               or d
+113   8200 F6 40            or $40
+114   8202 57               ld d, a
+115   8203 C9               ret
+116   8204
+117   8204              ; Moves DE down a line
+118   8204              ; https://www.chibiakumas.com/z80/simplesamples.php#LessonS2
+119   8204              GetNextLine:
+120   8204 14               inc d
+121   8205 7A               ld a, d
+122   8206 E6 07            and %00000111
+123   8208 C0               ret nz
+124   8209 7B               ld a, e
+125   820A C6 20            add a, %00100000
+126   820C 5F               ld e, a
+127   820D D8               ret c
+128   820E 7A               ld a, d
+129   820F D6 08            sub %00001000
+130   8211 57               ld d, a
+131   8212 C9               ret
+132   8213
+133   8213              ; HL - sprite address
+134   8213              ; DE - position address
+135   8213              ; https://www.chibiakumas.com/z80/simplesamples.php#LessonS2
+136   8213              DrawSprite:
+137   8213 06 08            ld b, 8
+138   8215              SpriteNextLine:
+139   8215 7E               ld a, (hl)
+140   8216 12               ld (de), a
+141   8217 23               inc hl
+142   8218
+143   8218 CD 04 82         call GetNextLine
+144   821B 10 F8            djnz SpriteNextLine
+145   821D
+146   821D C9               ret
+147   821E
+148   821E                  savesna "./main.sna", Main
 # file closed: main.asm
 
 Value    Label
@@ -460,20 +545,25 @@ Value    Label
 0x80B0 X Print_BCD_2
 0x80CC X Print_Char_At
 0x80EC   Print_UDG8
-0x80F5 X Main
-0x814C   PrepScreen
-0x8155   PrepTrack
-0x813B   FillTurnBack
-0x8133   DrawString
-0x8106   AnimLoop
-0x8105   AnimTickDelay
-0x8175   FillTrackStart
-0x8118   AnimLoopDone
-0x8167   TrackPaletteTick
-0x8122   TurnBackStr
-0x81B8   GetAttrAddress
-0x8166   TrackPaletteOffset
-0x8171   TrackPaletteTickDone
-0x8177   FillTrackLoop
-0x818C   FillTrackLoopBody
-0x817D   TrackPalette
+0x80F5   PrepTrack
+0x81DC   GetAttrAddress
+0x8106   TrackPaletteOffset
+0x8107   TrackPaletteTick
+0x8111   TrackPaletteTickDone
+0x8115   FillTrackStart
+0x8117   FillTrackLoop
+0x812C   FillTrackLoopBody
+0x811D   TrackPalette
+0x8158   PrepSky
+0x8179 X Main
+0x81D3   PrepScreen
+0x81C2   FillTurnBack
+0x81BA   DrawString
+0x818D   AnimLoop
+0x818C   AnimTickDelay
+0x819F   AnimLoopDone
+0x81A9   TurnBackStr
+0x81EE X GetScreenPos
+0x8204   GetNextLine
+0x8213 X DrawSprite
+0x8215   SpriteNextLine
