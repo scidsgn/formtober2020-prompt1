@@ -62,7 +62,7 @@ FillTurnBack:
 
 ; fill screen with black
 PrepScreen:
-    ld a, %00000111 ; black, white "ink"
+    ld a, %01000111 ; black, white "ink"
     call Clear_Screen
     call 8859 ; border color
     ret
