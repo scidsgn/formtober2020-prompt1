@@ -1,0 +1,352 @@
+# file opened: main.asm
+  1   0000                  device ZXSPECTRUM128
+  2   0000
+  3   0000                  org $8000
+  4   8000
+  5   8000                  include "./lib/output.z80"
+# file opened: ./lib/output.z80
+  1+  8000              ;
+  2+  8000              ; Title:	ZX Spectrum Standard Output Routines
+  3+  8000              ; Author:	Dean Belfield
+  4+  8000              ; Created:	29/07/2011
+  5+  8000              ; Last Updated:	08/02/2020
+  6+  8000              ;
+  7+  8000              ; Requires:
+  8+  8000              ;
+  9+  8000              ; Modinfo:
+ 10+  8000              ;
+ 11+  8000              ; 02/07/2012:	Added Pixel_Address_Down and Pixel_Address_Up routines
+ 12+  8000              ; 04/07/2012:	Moved Clear_Screen to Screen_Buffer
+ 13+  8000              ; 08/02/2010:	Added Print_BC
+ 14+  8000              ;		Moved Clear_Screen into here (originally in screen_buffer.z80)
+ 15+  8000              ;		All output routines refactored to use HL for screen address
+ 16+  8000              ;		Added Fill_Attr routine
+ 17+  8000              ;
+ 18+  8000
+ 19+  8000              ; Simple clear-screen routine
+ 20+  8000              ; Uses LDIR to block clear memory
+ 21+  8000              ; A:  Colour to clear attribute block of memory with
+ 22+  8000              ;
+ 23+  8000 21 00 40     Clear_Screen:		LD HL,16384			; Start address of screen bitmap
+ 24+  8003 11 01 40     			LD DE,16385			; Address + 1
+ 25+  8006 01 00 18     			LD BC,6144			; Length of bitmap memory to clear
+ 26+  8009 36 00        			LD (HL),0			; Set the first byte to 0
+ 27+  800B ED B0        			LDIR				; Copy this byte to the second, and so on
+ 28+  800D 01 FF 02     			LD BC,767			; Length of attribute memory, less one to clear
+ 29+  8010 77           			LD (HL),A			; Set the first byte to A
+ 30+  8011 ED B0        			LDIR				; Copy this byte to the second, and so on
+ 31+  8013 C9           			RET
+ 32+  8014
+ 33+  8014              ; Fill a box of the screen with a solid colour
+ 34+  8014              ;  A: The colour
+ 35+  8014              ; HL: Address in the attribute map
+ 36+  8014              ;  C: Width
+ 37+  8014              ;  B: Height
+ 38+  8014              ;
+ 39+  8014 11 20 00     Fill_Attr:		LD DE,32
+ 40+  8017 E5           1:			PUSH HL
+ 41+  8018 C5           			PUSH BC
+ 42+  8019 77           2:			LD (HL), A
+ 43+  801A 2C           			INC L
+ 44+  801B 0D           			DEC C
+ 45+  801C 20 FB        			JR NZ, 2B
+ 46+  801E C1           			POP BC
+ 47+  801F E1           			POP HL
+ 48+  8020 19           			ADD HL,DE
+ 49+  8021 10 F4        			DJNZ 1B
+ 50+  8023 C9           			RET
+ 51+  8024
+ 52+  8024              ; Print String Data
+ 53+  8024              ; First two bytes of string contain X and Y char position, then the string
+ 54+  8024              ; Individual strings are terminated with 0xFE
+ 55+  8024              ; End of data is terminated with 0xFF
+ 56+  8024              ; IX: Address of string
+ 57+  8024              ;
+ 58+  8024 DD 6E 00     Print_String:		LD L,(IX+0)			; Fetch the X coordinate
+ 59+  8027 DD 23        			INC IX				; Increase HL to the next memory location
+ 60+  8029 DD 66 00     			LD H,(IX+0)			; Fetch the Y coordinate
+ 61+  802C DD 23        			INC IX				; Increase HL to the next memory location
+ 62+  802E CD 42 80     			CALL Get_Char_Address		; Calculate the screen address (in DE)
+ 63+  8031 DD 7E 00     Print_String_0:		LD A,(IX)			; Fetch the character to print
+ 64+  8034 DD 23        			INC IX				; Increase HL to the next character
+ 65+  8036 FE FE        			CP 0xFE				; Compare with 0xFE
+ 66+  8038 28 EA        			JR Z,Print_String		; If it is equal to 0xFE then loop back to print next string
+ 67+  803A D0           			RET NC				; If it is greater or equal to (carry bit set) then
+ 68+  803B CD D1 80     			CALL Print_Char			; Print the character
+ 69+  803E 2C           			INC L				; Go to the next screen address
+ 70+  803F 18 F0        			JR Print_String_0		; Loop back to print next character
+ 71+  8041 C9           			RET
+ 72+  8042
+ 73+  8042              ; Get screen address
+ 74+  8042              ; H = Y character position
+ 75+  8042              ; L = X character position
+ 76+  8042              ; Returns address in HL
+ 77+  8042              ;
+ 78+  8042 7C           Get_Char_Address:	LD A,H
+ 79+  8043 E6 07        			AND %00000111
+ 80+  8045 1F           			RRA
+ 81+  8046 1F           			RRA
+ 82+  8047 1F           			RRA
+ 83+  8048 1F           			RRA
+ 84+  8049 B5           			OR L
+ 85+  804A 6F           			LD L,A
+ 86+  804B 7C           			LD A,H
+ 87+  804C E6 18        			AND %00011000
+ 88+  804E F6 40        			OR %01000000
+ 89+  8050 67           			LD H,A
+ 90+  8051 C9           			RET				; Returns screen address in HL
+ 91+  8052
+ 92+  8052              ; Move HL down one character line
+ 93+  8052              ;
+ 94+  8052 7D           Char_Address_Down:	LD A, L
+ 95+  8053 C6 20        			ADD A, 32
+ 96+  8055 6F           			LD L, A
+ 97+  8056 D0           			RET NC
+ 98+  8057 7C           			LD A, H
+ 99+  8058 C6 08        			ADD A, 8
+100+  805A 67           			LD H, A
+101+  805B C9           			RET
+102+  805C
+103+  805C              ; Get screen address
+104+  805C              ; B = Y pixel position
+105+  805C              ; C = X pixel position
+106+  805C              ; Returns address in HL and pixel position within character in A
+107+  805C              ;
+108+  805C 78           Get_Pixel_Address:	LD A,B				; Calculate Y2,Y1,Y0
+109+  805D E6 07        			AND %00000111			; Mask out unwanted bits
+110+  805F F6 40        			OR %01000000			; Set base address of screen
+111+  8061 67           			LD H,A				; Store in H
+112+  8062 78           			LD A,B				; Calculate Y7,Y6
+113+  8063 1F           			RRA				; Shift to position
+114+  8064 1F           			RRA
+115+  8065 1F           			RRA
+116+  8066 E6 18        			AND %00011000			; Mask out unwanted bits
+117+  8068 B4           			OR H				; OR with Y2,Y1,Y0
+118+  8069 67           			LD H,A				; Store in H
+119+  806A 78           			LD A,B				; Calculate Y5,Y4,Y3
+120+  806B 17           			RLA				; Shift to position
+121+  806C 17           			RLA
+122+  806D E6 E0        			AND %11100000			; Mask out unwanted bits
+123+  806F 6F           			LD L,A				; Store in L
+124+  8070 79           			LD A,C				; Calculate X4,X3,X2,X1,X0
+125+  8071 1F           			RRA				; Shift into position
+126+  8072 1F           			RRA
+127+  8073 1F           			RRA
+128+  8074 E6 1F        			AND %00011111			; Mask out unwanted bits
+129+  8076 B5           			OR L				; OR with Y5,Y4,Y3
+130+  8077 6F           			LD L,A				; Store in L
+131+  8078 79           			LD A,C
+132+  8079 E6 07        			AND 7
+133+  807B C9           			RET
+134+  807C
+135+  807C              ; Move HL down one pixel line
+136+  807C              ;
+137+  807C 24           Pixel_Address_Down:	INC H				; Go down onto the next pixel line
+138+  807D 7C           			LD A,H				; Check if we have gone onto next character boundary
+139+  807E E6 07        			AND 7
+140+  8080 C0           			RET NZ				; No, so skip the next bit
+141+  8081 7D           			LD A,L				; Go onto the next character line
+142+  8082 C6 20        			ADD A,32
+143+  8084 6F           			LD L,A
+144+  8085 D8           			RET C				; Check if we have gone onto next third of screen
+145+  8086 7C           			LD A,H				; Yes, so go onto next third
+146+  8087 D6 08        			SUB 8
+147+  8089 67           			LD H,A
+148+  808A C9           			RET
+149+  808B
+150+  808B              ; Move HL up one pixel line
+151+  808B              ;
+152+  808B 25           Pixel_Address_Up:	DEC H				; Go up onto the next pixel line
+153+  808C 7C           			LD A,H				; Check if we have gone onto the next character boundary
+154+  808D E6 07        			AND 7
+155+  808F FE 07        			CP 7
+156+  8091 6F           			LD L,A
+157+  8092 D8           			RET C
+158+  8093 7C           			LD A,H
+159+  8094 C6 08        			ADD A,8
+160+  8096 67           			LD H,A
+161+  8097 C9           			RET
+162+  8098
+163+  8098              ; Print a single BCD value
+164+  8098              ;  A: Character to print
+165+  8098              ; HL: Screen address to print character at
+166+  8098              ;
+167+  8098 DD 7E 00     Print_BCD_8		LD A, (IX)
+167+  809B DD 23          INC IX
+167+  809D CD B5 80       CALL Print_BCD
+168+  80A0 DD 7E 00     Print_BCD_6		LD A, (IX)
+168+  80A3 DD 23          INC IX
+168+  80A5 CD B5 80       CALL Print_BCD
+169+  80A8 DD 7E 00     Print_BCD_4		LD A, (IX)
+169+  80AB DD 23          INC IX
+169+  80AD CD B5 80       CALL Print_BCD
+170+  80B0 DD 7E 00     Print_BCD_2		LD A, (IX)
+170+  80B3 DD 23          INC IX
+171+  80B5 F5           Print_BCD:		PUSH AF				; Store the value
+172+  80B6 E6 F0        			AND 0xF0			; Get the top nibble
+173+  80B8 1F           			RRA				; Shift into bottom nibble
+174+  80B9 1F           			RRA
+175+  80BA 1F           			RRA
+176+  80BB 1F           			RRA
+177+  80BC C6 30        			ADD A, '0'			; Add to ASCII '0'
+178+  80BE CD D1 80     			CALL Print_Char			; Print the character
+179+  80C1 2C           			INC L				; Move right one space
+180+  80C2 F1           			POP AF
+181+  80C3 E6 0F        			AND 0x0F			; Get the bottom nibble
+182+  80C5 C6 30        			ADD A, '0'			; Add to ASCII '0'
+183+  80C7 CD D1 80     			CALL Print_Char			; Print
+184+  80CA 2C           			INC L				; Move right one space
+185+  80CB C9           			RET
+186+  80CC
+187+  80CC              ; Print a single character out to an X/Y position
+188+  80CC              ;  A: Character to print
+189+  80CC              ;  C: X Coordinate
+190+  80CC              ;  B: Y Coordinate
+191+  80CC              ; DE: Address of character set
+192+  80CC              ;
+193+  80CC F5           Print_Char_At:		PUSH AF
+194+  80CD CD 42 80     			CALL Get_Char_Address
+195+  80D0 F1           			POP AF				; Fall through to Print_Char
+196+  80D1              ;
+197+  80D1              ; Print a single character out to a screen address
+198+  80D1              ;  A:  Character to print
+199+  80D1              ;  HL: Screen address to print character at
+200+  80D1              ;  DE: Address of character set (if entering at Print_Char_UDG)
+201+  80D1              ; No SM code here - needs to be re-enterent if called on interrupt
+202+  80D1              ;
+203+  80D1 11 00 3C     Print_Char:		LD DE, 0x3C00			; Address of character set in ROM
+204+  80D4 E5           			PUSH HL
+205+  80D5 06 00        			LD B, 0				; Get index into character set
+206+  80D7 4F           			LD C, A
+207+  80D8              			DUP 3
+208+  80D8 CB 21       >			SLA C
+209+  80DA CB 10       >			RL B
+208+  80DC CB 21       >			SLA C
+209+  80DE CB 10       >			RL B
+208+  80E0 CB 21       >			SLA C
+209+  80E2 CB 10       >			RL B
+210+  80E4              			EDUP
+211+  80E4 EB           			EX DE, HL
+212+  80E5 09           			ADD HL, BC
+213+  80E6 EB           			EX DE, HL
+214+  80E7 CD EC 80     			CALL Print_UDG8
+215+  80EA E1           			POP HL
+216+  80EB C9           			RET
+217+  80EC
+218+  80EC              ; Print a UDG (Single Height)
+219+  80EC              ; DE - Character data
+220+  80EC              ; HL - Screen address
+221+  80EC              ;
+222+  80EC 06 08        Print_UDG8:		LD B,8				; Loop counter
+223+  80EE 1A           2:			LD A,(DE)			; Get the byte from the ROM into A
+224+  80EF 77           			LD (HL),A			; Stick A onto the screen
+225+  80F0 13           			INC DE				; Goto next byte of character
+226+  80F1 24           			INC H				; Goto next line on screen
+227+  80F2 10 FA        			DJNZ 2B				; Loop around whilst it is Not Zero (NZ)
+228+  80F4 C9           			RET
+229+  80F5
+# file closed: ./lib/output.z80
+  6   80F5
+  7   80F5              Main:
+  8   80F5                  ; pain incoming
+  9   80F5 CD 1B 81         call PrepScreen
+ 10   80F8 CD 24 81         call PrepTrack
+ 11   80FB
+ 12   80FB CD 35 81         call FillTurnBack
+ 13   80FE CD 13 81         call DrawString
+ 14   8101 C9               ret
+ 15   8102
+ 16   8102              ; Draws the * TURN BACK * text
+ 17   8102 09 00 2A 20  TurnBackStr: db $9, $0, "* TURN  BACK *", $FF
+ 17   8106 54 55 52 4E
+ 17   810A 20 20 42 41
+ 17   810E 43 4B 20 2A
+ 17   8112 FF
+ 18   8113              DrawString:
+ 19   8113 DD 21 02 81      ld ix, TurnBackStr
+ 20   8117 CD 24 80         call Print_String
+ 21   811A C9               ret
+ 22   811B
+ 23   811B              ; fill screen with black
+ 24   811B              PrepScreen:
+ 25   811B 3E 00            ld a, %00000000 ; black
+ 26   811D CD 00 80         call Clear_Screen
+ 27   8120 CD 9B 22         call 8859 ; border color
+ 28   8123 C9               ret
+ 29   8124
+ 30   8124              ; fills out the area that will be next to the track
+ 31   8124              PrepTrack:
+ 32   8124 06 00            ld b, 0
+ 33   8126 0E 60            ld c, 96 ; 12 * 8 (8 "pixels" per block)
+ 34   8128 CD 46 81         call GetAttrAddress
+ 35   812B
+ 36   812B 0E 20            ld c, 32
+ 37   812D 06 0C            ld b, 12
+ 38   812F 3E 3F            ld a, %00111111 ; "dark" white = gray
+ 39   8131 CD 14 80         call Fill_Attr
+ 40   8134 C9               ret
+ 41   8135
+ 42   8135
+ 43   8135              FillTurnBack:
+ 44   8135 06 08            ld b, 8
+ 45   8137 0E 00            ld c, 0
+ 46   8139 CD 46 81         call GetAttrAddress ; HL = address
+ 47   813C
+ 48   813C 0E 10            ld c, 16 ; width
+ 49   813E 06 01            ld b, 1 ; height
+ 50   8140 3E C2            ld a, %11000010 ; bright red, flashing
+ 51   8142 CD 14 80         call Fill_Attr
+ 52   8145 C9               ret
+ 53   8146
+ 54   8146              ; Get address of block in attribute map
+ 55   8146              ; BC - XY
+ 56   8146              ; address -> HL
+ 57   8146              ; https://www.chibiakumas.com/z80/simplesamples.php#LessonS2
+ 58   8146              GetAttrAddress:
+ 59   8146 79               ld a, C
+ 60   8147 E6 C0                and %11000000
+ 61   8149 07                   rlca
+ 62   814A 07                   rlca
+ 63   814B C6 58                add $58
+ 64   814D 57                   ld d, a
+ 65   814E 79               ld a, C
+ 66   814F E6 38            and %00111000
+ 67   8151 07               rlca
+ 68   8152 07               rlca
+ 69   8153
+ 70   8153 80               add b
+ 71   8154 5F               ld e, a
+ 72   8155
+ 73   8155 D5               push de
+ 74   8156 E1               pop hl
+ 75   8157 C9               ret
+ 76   8158
+ 77   8158                  savesna "./main.sna", Main
+# file closed: main.asm
+
+Value    Label
+------ - -----------------------------------------------------------
+0x8000   Clear_Screen
+0x8014   Fill_Attr
+0x8024   Print_String
+0x8042   Get_Char_Address
+0x8031   Print_String_0
+0x80D1   Print_Char
+0x8052 X Char_Address_Down
+0x805C X Get_Pixel_Address
+0x807C X Pixel_Address_Down
+0x808B X Pixel_Address_Up
+0x8098 X Print_BCD_8
+0x80B5   Print_BCD
+0x80A0 X Print_BCD_6
+0x80A8 X Print_BCD_4
+0x80B0 X Print_BCD_2
+0x80CC X Print_Char_At
+0x80EC   Print_UDG8
+0x80F5 X Main
+0x811B   PrepScreen
+0x8124   PrepTrack
+0x8135   FillTurnBack
+0x8113   DrawString
+0x8102   TurnBackStr
+0x8146   GetAttrAddress
