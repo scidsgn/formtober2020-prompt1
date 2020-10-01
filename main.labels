@@ -22,5 +22,5 @@ FillTrackStart: equ 0x00008149
 FillTurnBack: equ 0x0000811E
 DrawString: equ 0x00008116
 TurnBackStr: equ 0x00008105
-GetAttrAddress: equ 0x00008163
+GetAttrAddress: equ 0x0000816A
 FillTrackLoop: equ 0x0000814B

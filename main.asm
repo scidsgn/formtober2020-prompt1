@@ -65,9 +65,21 @@ FillTrackLoop:
     rla
     add 88
     ld c, a
+
+    ; Calculating the X position of the track block
+    ld a, 10
+    sub b
+    ld b, a
+
     call GetAttrAddress
 
-    ld c, 10
+    ; Calculating the width
+    ; Width = 32 - x - x (x = "margin")
+    ld a, 32
+    sub b
+    sub b
+    ld c, a
+    ; Height = 1, blah blah...
     ld b, 1
     ld a, %01010010
     call Fill_Attr

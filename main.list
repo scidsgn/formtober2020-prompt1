@@ -272,7 +272,7 @@
  25   811E              FillTurnBack:
  26   811E 06 08            ld b, 8
  27   8120 0E 00            ld c, 0
- 28   8122 CD 63 81         call GetAttrAddress ; HL = address
+ 28   8122 CD 6A 81         call GetAttrAddress ; HL = address
  29   8125
  30   8125 0E 10            ld c, 16 ; width
  31   8127 06 01            ld b, 1 ; height
@@ -291,7 +291,7 @@
  44   8138              PrepTrack:
  45   8138 06 00            ld b, 0
  46   813A 0E 60            ld c, 96 ; 12 * 8 (8 "pixels" per block)
- 47   813C CD 63 81         call GetAttrAddress
+ 47   813C CD 6A 81         call GetAttrAddress
  48   813F
  49   813F 0E 20            ld c, 32
  50   8141 06 0C            ld b, 12
@@ -312,42 +312,53 @@
  65   814F 17               rla
  66   8150 C6 58            add 88
  67   8152 4F               ld c, a
- 68   8153 CD 63 81         call GetAttrAddress
- 69   8156
- 70   8156 0E 0A            ld c, 10
- 71   8158 06 01            ld b, 1
- 72   815A 3E 52            ld a, %01010010
- 73   815C CD 14 80         call Fill_Attr
- 74   815F
- 75   815F C1               pop bc ; bring back the loop counter
- 76   8160 10 E9            djnz FillTrackLoop ; loop back if b != 0
- 77   8162
- 78   8162 C9               ret
- 79   8163
- 80   8163              ; Get address of block in attribute map
- 81   8163              ; BC - XY
- 82   8163              ; address -> HL
- 83   8163              ; https://www.chibiakumas.com/z80/simplesamples.php#LessonS2
- 84   8163              GetAttrAddress:
- 85   8163 79               ld a, C
- 86   8164 E6 C0                and %11000000
- 87   8166 07                   rlca
- 88   8167 07                   rlca
- 89   8168 C6 58                add $58
- 90   816A 57                   ld d, a
- 91   816B 79               ld a, C
- 92   816C E6 38            and %00111000
- 93   816E 07               rlca
- 94   816F 07               rlca
- 95   8170
- 96   8170 80               add b
- 97   8171 5F               ld e, a
- 98   8172
- 99   8172 D5               push de
-100   8173 E1               pop hl
-101   8174 C9               ret
-102   8175
-103   8175                  savesna "./main.sna", Main
+ 68   8153
+ 69   8153                  ; Calculating the X position of the track block
+ 70   8153 3E 0A            ld a, 10
+ 71   8155 90               sub b
+ 72   8156 47               ld b, a
+ 73   8157
+ 74   8157 CD 6A 81         call GetAttrAddress
+ 75   815A
+ 76   815A                  ; Calculating the width
+ 77   815A                  ; Width = 32 - x - x (x = "margin")
+ 78   815A 3E 20            ld a, 32
+ 79   815C 90               sub b
+ 80   815D 90               sub b
+ 81   815E 4F               ld c, a
+ 82   815F 06 01            ld b, 1
+ 83   8161 3E 52            ld a, %01010010
+ 84   8163 CD 14 80         call Fill_Attr
+ 85   8166
+ 86   8166 C1               pop bc ; bring back the loop counter
+ 87   8167 10 E2            djnz FillTrackLoop ; loop back if b != 0
+ 88   8169
+ 89   8169 C9               ret
+ 90   816A
+ 91   816A              ; Get address of block in attribute map
+ 92   816A              ; BC - XY
+ 93   816A              ; address -> HL
+ 94   816A              ; https://www.chibiakumas.com/z80/simplesamples.php#LessonS2
+ 95   816A              GetAttrAddress:
+ 96   816A 79               ld a, C
+ 97   816B E6 C0                and %11000000
+ 98   816D 07                   rlca
+ 99   816E 07                   rlca
+100   816F C6 58                add $58
+101   8171 57                   ld d, a
+102   8172 79               ld a, C
+103   8173 E6 38            and %00111000
+104   8175 07               rlca
+105   8176 07               rlca
+106   8177
+107   8177 80               add b
+108   8178 5F               ld e, a
+109   8179
+110   8179 D5               push de
+111   817A E1               pop hl
+112   817B C9               ret
+113   817C
+114   817C                  savesna "./main.sna", Main
 # file closed: main.asm
 
 Value    Label
@@ -376,5 +387,5 @@ Value    Label
 0x811E   FillTurnBack
 0x8116   DrawString
 0x8105   TurnBackStr
-0x8163   GetAttrAddress
+0x816A   GetAttrAddress
 0x814B   FillTrackLoop
