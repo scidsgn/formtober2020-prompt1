@@ -249,79 +249,105 @@
   6   80F5
   7   80F5              Main:
   8   80F5                  ; pain incoming
-  9   80F5 CD 1B 81         call PrepScreen
- 10   80F8 CD 24 81         call PrepTrack
+  9   80F5 CD 2F 81         call PrepScreen
+ 10   80F8 CD 38 81         call PrepTrack
  11   80FB
- 12   80FB CD 35 81         call FillTurnBack
- 13   80FE CD 13 81         call DrawString
- 14   8101 C9               ret
- 15   8102
- 16   8102              ; Draws the * TURN BACK * text
- 17   8102 09 00 2A 20  TurnBackStr: db $9, $0, "* TURN  BACK *", $FF
- 17   8106 54 55 52 4E
- 17   810A 20 20 42 41
- 17   810E 43 4B 20 2A
- 17   8112 FF
- 18   8113              DrawString:
- 19   8113 DD 21 02 81      ld ix, TurnBackStr
- 20   8117 CD 24 80         call Print_String
- 21   811A C9               ret
- 22   811B
- 23   811B              ; fill screen with black
- 24   811B              PrepScreen:
- 25   811B 3E 00            ld a, %00000000 ; black
- 26   811D CD 00 80         call Clear_Screen
- 27   8120 CD 9B 22         call 8859 ; border color
- 28   8123 C9               ret
- 29   8124
- 30   8124              ; fills out the area that will be next to the track
- 31   8124              PrepTrack:
- 32   8124 06 00            ld b, 0
- 33   8126 0E 60            ld c, 96 ; 12 * 8 (8 "pixels" per block)
- 34   8128 CD 46 81         call GetAttrAddress
- 35   812B
- 36   812B 0E 20            ld c, 32
- 37   812D 06 0C            ld b, 12
- 38   812F 3E 3F            ld a, %00111111 ; "dark" white = gray
- 39   8131 CD 14 80         call Fill_Attr
- 40   8134 C9               ret
- 41   8135
- 42   8135
- 43   8135              FillTurnBack:
- 44   8135 06 08            ld b, 8
- 45   8137 0E 00            ld c, 0
- 46   8139 CD 46 81         call GetAttrAddress ; HL = address
- 47   813C
- 48   813C 0E 10            ld c, 16 ; width
- 49   813E 06 01            ld b, 1 ; height
- 50   8140 3E C2            ld a, %11000010 ; bright red, flashing
- 51   8142 CD 14 80         call Fill_Attr
- 52   8145 C9               ret
- 53   8146
- 54   8146              ; Get address of block in attribute map
- 55   8146              ; BC - XY
- 56   8146              ; address -> HL
- 57   8146              ; https://www.chibiakumas.com/z80/simplesamples.php#LessonS2
- 58   8146              GetAttrAddress:
- 59   8146 79               ld a, C
- 60   8147 E6 C0                and %11000000
- 61   8149 07                   rlca
- 62   814A 07                   rlca
- 63   814B C6 58                add $58
- 64   814D 57                   ld d, a
- 65   814E 79               ld a, C
- 66   814F E6 38            and %00111000
- 67   8151 07               rlca
- 68   8152 07               rlca
- 69   8153
- 70   8153 80               add b
- 71   8154 5F               ld e, a
- 72   8155
- 73   8155 D5               push de
- 74   8156 E1               pop hl
- 75   8157 C9               ret
- 76   8158
- 77   8158                  savesna "./main.sna", Main
+ 12   80FB CD 49 81         call FillTrackStart
+ 13   80FE
+ 14   80FE CD 1E 81         call FillTurnBack
+ 15   8101 CD 16 81         call DrawString
+ 16   8104 C9               ret
+ 17   8105
+ 18   8105              ; Draws the * TURN BACK * text
+ 19   8105 09 00 2A 20  TurnBackStr: db $9, $0, "* TURN  BACK *", $FF
+ 19   8109 54 55 52 4E
+ 19   810D 20 20 42 41
+ 19   8111 43 4B 20 2A
+ 19   8115 FF
+ 20   8116              DrawString:
+ 21   8116 DD 21 05 81      ld ix, TurnBackStr
+ 22   811A CD 24 80         call Print_String
+ 23   811D C9               ret
+ 24   811E
+ 25   811E              FillTurnBack:
+ 26   811E 06 08            ld b, 8
+ 27   8120 0E 00            ld c, 0
+ 28   8122 CD 63 81         call GetAttrAddress ; HL = address
+ 29   8125
+ 30   8125 0E 10            ld c, 16 ; width
+ 31   8127 06 01            ld b, 1 ; height
+ 32   8129 3E C2            ld a, %11000010 ; bright red, flashing
+ 33   812B CD 14 80         call Fill_Attr
+ 34   812E C9               ret
+ 35   812F
+ 36   812F              ; fill screen with black
+ 37   812F              PrepScreen:
+ 38   812F 3E 00            ld a, %00000000 ; black
+ 39   8131 CD 00 80         call Clear_Screen
+ 40   8134 CD 9B 22         call 8859 ; border color
+ 41   8137 C9               ret
+ 42   8138
+ 43   8138              ; fills out the area that will be next to the track
+ 44   8138              PrepTrack:
+ 45   8138 06 00            ld b, 0
+ 46   813A 0E 60            ld c, 96 ; 12 * 8 (8 "pixels" per block)
+ 47   813C CD 63 81         call GetAttrAddress
+ 48   813F
+ 49   813F 0E 20            ld c, 32
+ 50   8141 06 0C            ld b, 12
+ 51   8143 3E 3F            ld a, %00111111 ; "dark" white = gray
+ 52   8145 CD 14 80         call Fill_Attr
+ 53   8148 C9               ret
+ 54   8149
+ 55   8149              FillTrackStart:
+ 56   8149 06 0A            ld b, 10 ; b is the loop counter
+ 57   814B              FillTrackLoop:
+ 58   814B C5               push bc ; this puts b (and c) onto the stack
+ 59   814C                          ; that will preserve the loop counter
+ 60   814C
+ 61   814C                  ; Calculating the Y position of the track block
+ 62   814C 78               ld a, b
+ 63   814D 17               rla ; multiply by 8 by rotating left 3 times
+ 64   814E 17               rla
+ 65   814F 17               rla
+ 66   8150 C6 58            add 88
+ 67   8152 4F               ld c, a
+ 68   8153 CD 63 81         call GetAttrAddress
+ 69   8156
+ 70   8156 0E 0A            ld c, 10
+ 71   8158 06 01            ld b, 1
+ 72   815A 3E 52            ld a, %01010010
+ 73   815C CD 14 80         call Fill_Attr
+ 74   815F
+ 75   815F C1               pop bc ; bring back the loop counter
+ 76   8160 10 E9            djnz FillTrackLoop ; loop back if b != 0
+ 77   8162
+ 78   8162 C9               ret
+ 79   8163
+ 80   8163              ; Get address of block in attribute map
+ 81   8163              ; BC - XY
+ 82   8163              ; address -> HL
+ 83   8163              ; https://www.chibiakumas.com/z80/simplesamples.php#LessonS2
+ 84   8163              GetAttrAddress:
+ 85   8163 79               ld a, C
+ 86   8164 E6 C0                and %11000000
+ 87   8166 07                   rlca
+ 88   8167 07                   rlca
+ 89   8168 C6 58                add $58
+ 90   816A 57                   ld d, a
+ 91   816B 79               ld a, C
+ 92   816C E6 38            and %00111000
+ 93   816E 07               rlca
+ 94   816F 07               rlca
+ 95   8170
+ 96   8170 80               add b
+ 97   8171 5F               ld e, a
+ 98   8172
+ 99   8172 D5               push de
+100   8173 E1               pop hl
+101   8174 C9               ret
+102   8175
+103   8175                  savesna "./main.sna", Main
 # file closed: main.asm
 
 Value    Label
@@ -344,9 +370,11 @@ Value    Label
 0x80CC X Print_Char_At
 0x80EC   Print_UDG8
 0x80F5 X Main
-0x811B   PrepScreen
-0x8124   PrepTrack
-0x8135   FillTurnBack
-0x8113   DrawString
-0x8102   TurnBackStr
-0x8146   GetAttrAddress
+0x812F   PrepScreen
+0x8138   PrepTrack
+0x8149   FillTrackStart
+0x811E   FillTurnBack
+0x8116   DrawString
+0x8105   TurnBackStr
+0x8163   GetAttrAddress
+0x814B   FillTrackLoop

@@ -9,6 +9,8 @@ Main:
     call PrepScreen
     call PrepTrack
 
+    call FillTrackStart
+
     call FillTurnBack
     call DrawString
     ret
@@ -18,6 +20,17 @@ TurnBackStr: db $9, $0, "* TURN  BACK *", $FF
 DrawString:
     ld ix, TurnBackStr
     call Print_String
+    ret
+
+FillTurnBack:
+    ld b, 8
+    ld c, 0
+    call GetAttrAddress ; HL = address
+
+    ld c, 16 ; width
+    ld b, 1 ; height
+    ld a, %11000010 ; bright red, flashing
+    call Fill_Attr
     ret
 
 ; fill screen with black
@@ -39,16 +52,29 @@ PrepTrack:
     call Fill_Attr
     ret
 
+FillTrackStart:
+    ld b, 10 ; b is the loop counter
+FillTrackLoop:
+    push bc ; this puts b (and c) onto the stack
+            ; that will preserve the loop counter
 
-FillTurnBack:
-    ld b, 8
-    ld c, 0
-    call GetAttrAddress ; HL = address
+    ; Calculating the Y position of the track block
+    ld a, b
+    rla ; multiply by 8 by rotating left 3 times
+    rla
+    rla
+    add 88
+    ld c, a
+    call GetAttrAddress
 
-    ld c, 16 ; width
-    ld b, 1 ; height
-    ld a, %11000010 ; bright red, flashing
+    ld c, 10
+    ld b, 1
+    ld a, %01010010
     call Fill_Attr
+
+    pop bc ; bring back the loop counter
+    djnz FillTrackLoop ; loop back if b != 0
+
     ret
 
 ; Get address of block in attribute map

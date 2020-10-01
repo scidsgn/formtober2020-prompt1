@@ -16,9 +16,11 @@ Print_BCD_2: equ 0x000080B0
 Print_Char_At: equ 0x000080CC
 Print_UDG8: equ 0x000080EC
 Main: equ 0x000080F5
-PrepScreen: equ 0x0000811B
-PrepTrack: equ 0x00008124
-FillTurnBack: equ 0x00008135
-DrawString: equ 0x00008113
-TurnBackStr: equ 0x00008102
-GetAttrAddress: equ 0x00008146
+PrepScreen: equ 0x0000812F
+PrepTrack: equ 0x00008138
+FillTrackStart: equ 0x00008149
+FillTurnBack: equ 0x0000811E
+DrawString: equ 0x00008116
+TurnBackStr: equ 0x00008105
+GetAttrAddress: equ 0x00008163
+FillTrackLoop: equ 0x0000814B
