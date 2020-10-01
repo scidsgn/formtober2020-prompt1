@@ -15,9 +15,26 @@ Main:
     call AnimLoop
     ret
 
+AnimTickDelay: db 80 ; delay for tick updates
+
 ; Animation loop!
 AnimLoop:
     call FillTrackStart
+
+    ; This calms the tick updates by spacing them out
+    ld a, (AnimTickDelay)
+    cp 0
+    jr nz, AnimLoopDone
+    ld a, 80
+    ld (AnimTickDelay), a
+
+    ; Tick updates
+    call TrackPaletteTick
+
+AnimLoopDone:
+    ld a, (AnimTickDelay)
+    dec a
+    ld (AnimTickDelay), a
 
     jp AnimLoop
 
