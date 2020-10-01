@@ -13,27 +13,31 @@ Main:
     call PrepTrack
     call PrepSky
 
+    call PrepBorder
+
     call FillTurnBack
     call DrawString
 
     call AnimLoop
     ret
 
-AnimTickDelay: db 80 ; delay for tick updates
+AnimTickDelay: db 60 ; delay for tick updates
 
 ; Animation loop!
 AnimLoop:
     call FillTrackStart
+    call DrawStars
 
     ; This calms the tick updates by spacing them out
     ld a, (AnimTickDelay)
     cp 0
     jr nz, AnimLoopDone
-    ld a, 80
+    ld a, 60
     ld (AnimTickDelay), a
 
     ; Tick updates
     call TrackPaletteTick
+    call StarBlinkTick
 
 AnimLoopDone:
     ld a, (AnimTickDelay)
@@ -64,8 +68,13 @@ FillTurnBack:
 PrepScreen:
     ld a, %01000111 ; black, white "ink"
     call Clear_Screen
+    ret
+
+PrepBorder:
+    ld a, %00000000
     call 8859 ; border color
     ret
+
 
 ; Get address of block in attribute map
 ; BC - XY

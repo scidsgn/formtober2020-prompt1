@@ -255,7 +255,7 @@
   4+  80F5              PrepTrack:
   5+  80F5 06 00            ld b, 0
   6+  80F7 0E 60            ld c, 96 ; 12 * 8 (8 "pixels" per block)
-  7+  80F9 CD 34 82         call GetAttrAddress
+  7+  80F9 CD C5 82         call GetAttrAddress
   8+  80FC
   9+  80FC 0E 20            ld c, 32
  10+  80FE 06 0C            ld b, 12
@@ -322,7 +322,7 @@
  71+  8136 90               sub b
  72+  8137 47               ld b, a
  73+  8138
- 74+  8138 CD 34 82         call GetAttrAddress
+ 74+  8138 CD C5 82         call GetAttrAddress
  75+  813B
  76+  813B                  ; Pick the color from the palette based on X
  77+  813B E5               push hl ; hl has the address!!
@@ -362,7 +362,7 @@
   2+  8158              PrepSky:
   3+  8158 06 00            ld b, 0
   4+  815A 0E 58            ld c, 88
-  5+  815C CD 34 82         call GetAttrAddress ; HL = address
+  5+  815C CD C5 82         call GetAttrAddress ; HL = address
   6+  815F
   7+  815F 0E 20            ld c, 32 ; width
   8+  8161 06 01            ld b, 1 ; height
@@ -371,7 +371,7 @@
  11+  8168
  12+  8168 06 00            ld b, 0
  13+  816A 0E 50            ld c, 80
- 14+  816C CD 34 82         call GetAttrAddress ; HL = address
+ 14+  816C CD C5 82         call GetAttrAddress ; HL = address
  15+  816F
  16+  816F 0E 20            ld c, 32 ; width
  17+  8171 06 01            ld b, 1 ; height
@@ -420,173 +420,264 @@
  60+  819C 21 7C 81         ld hl, MoonSprite00
  61+  819F 06 02            ld b, 2
  62+  81A1 0E 10            ld c, 16
- 63+  81A3 CD 46 82         call GetScreenPos
- 64+  81A6 CD 6B 82         call DrawSprite
+ 63+  81A3 CD D7 82         call GetScreenPos
+ 64+  81A6 CD FC 82         call DrawSprite
  65+  81A9
  66+  81A9 21 84 81         ld hl, MoonSprite01
  67+  81AC 06 03            ld b, 3
  68+  81AE 0E 10            ld c, 16
- 69+  81B0 CD 46 82         call GetScreenPos
- 70+  81B3 CD 6B 82         call DrawSprite
+ 69+  81B0 CD D7 82         call GetScreenPos
+ 70+  81B3 CD FC 82         call DrawSprite
  71+  81B6
  72+  81B6 21 8C 81         ld hl, MoonSprite10
  73+  81B9 06 02            ld b, 2
  74+  81BB 0E 18            ld c, 24
- 75+  81BD CD 46 82         call GetScreenPos
- 76+  81C0 CD 6B 82         call DrawSprite
+ 75+  81BD CD D7 82         call GetScreenPos
+ 76+  81C0 CD FC 82         call DrawSprite
  77+  81C3
  78+  81C3 21 94 81         ld hl, MoonSprite11
  79+  81C6 06 03            ld b, 3
  80+  81C8 0E 18            ld c, 24
- 81+  81CA CD 46 82         call GetScreenPos
- 82+  81CD CD 6B 82         call DrawSprite
+ 81+  81CA CD D7 82         call GetScreenPos
+ 82+  81CD CD FC 82         call DrawSprite
  83+  81D0
  84+  81D0 C9               ret
+ 85+  81D1
+ 86+  81D1 00           StarsSprite0: db %00000000
+ 87+  81D2 04                         db %00000100
+ 88+  81D3 0A                         db %00001010
+ 89+  81D4 04                         db %00000100
+ 90+  81D5 00                         db %00000000
+ 91+  81D6 40                         db %01000000
+ 92+  81D7 A0                         db %10100000
+ 93+  81D8 40                         db %01000000
+ 94+  81D9 00           StarsSprite1: db %00000000
+ 95+  81DA 0A                         db %00001010
+ 96+  81DB 04                         db %00000100
+ 97+  81DC 0A                         db %00001010
+ 98+  81DD 00                         db %00000000
+ 99+  81DE A0                         db %10100000
+100+  81DF 40                         db %01000000
+101+  81E0 A0                         db %10100000
+102+  81E1
+103+  81E1 00           StarBlinkOffset: db 0 ; 0 or 1
+104+  81E2
+105+  81E2              StarBlinkTick:
+106+  81E2 3A E1 81         ld a, (StarBlinkOffset)
+107+  81E5 EE 01            xor 1
+108+  81E7 32 E1 81         ld (StarBlinkOffset), a
+109+  81EA
+110+  81EA              DrawStars:
+111+  81EA 06 06            ld b, 6
+112+  81EC 0E 10            ld c, 16
+113+  81EE CD D7 82         call GetScreenPos
+114+  81F1 CD 45 82         call DrawStar
+115+  81F4
+116+  81F4 06 10            ld b, 16
+117+  81F6 0E 10            ld c, 16
+118+  81F8 CD D7 82         call GetScreenPos
+119+  81FB CD 45 82         call DrawStar
+120+  81FE
+121+  81FE 06 1A            ld b, 26
+122+  8200 0E 10            ld c, 16
+123+  8202 CD D7 82         call GetScreenPos
+124+  8205 CD 45 82         call DrawStar
+125+  8208
+126+  8208 06 0A            ld b, 10
+127+  820A 0E 20            ld c, 32
+128+  820C CD D7 82         call GetScreenPos
+129+  820F CD 45 82         call DrawStar
+130+  8212
+131+  8212 06 14            ld b, 20
+132+  8214 0E 20            ld c, 32
+133+  8216 CD D7 82         call GetScreenPos
+134+  8219 CD 45 82         call DrawStar
+135+  821C
+136+  821C 06 1E            ld b, 30
+137+  821E 0E 20            ld c, 32
+138+  8220 CD D7 82         call GetScreenPos
+139+  8223 CD 45 82         call DrawStar
+140+  8226
+141+  8226 06 04            ld b, 4
+142+  8228 0E 30            ld c, 48
+143+  822A CD D7 82         call GetScreenPos
+144+  822D CD 45 82         call DrawStar
+145+  8230
+146+  8230 06 0E            ld b, 14
+147+  8232 0E 30            ld c, 48
+148+  8234 CD D7 82         call GetScreenPos
+149+  8237 CD 45 82         call DrawStar
+150+  823A
+151+  823A 06 18            ld b, 24
+152+  823C 0E 30            ld c, 48
+153+  823E CD D7 82         call GetScreenPos
+154+  8241 CD 45 82         call DrawStar
+155+  8244
+156+  8244 C9               ret
+157+  8245
+158+  8245              DrawStar:
+159+  8245 21 D1 81         ld hl, StarsSprite0
+160+  8248 3A E1 81         ld a, (StarBlinkOffset)
+161+  824B FE 00            cp 0
+162+  824D 28 03            jr z, DrawStarCont
+163+  824F 21 D9 81         ld hl, StarsSprite1
+164+  8252              DrawStarCont:
+165+  8252 CD FC 82         call DrawSprite
+166+  8255 C9               ret
 # file closed: ./sky.asm
-  9   81D1
- 10   81D1              Main:
- 11   81D1                  ; pain incoming
- 12   81D1 CD 2B 82         call PrepScreen
- 13   81D4 CD F5 80         call PrepTrack
- 14   81D7 CD 58 81         call PrepSky
- 15   81DA
- 16   81DA CD 1A 82         call FillTurnBack
- 17   81DD CD 12 82         call DrawString
- 18   81E0
- 19   81E0 CD E5 81         call AnimLoop
- 20   81E3 C9               ret
- 21   81E4
- 22   81E4 50           AnimTickDelay: db 80 ; delay for tick updates
- 23   81E5
- 24   81E5              ; Animation loop!
- 25   81E5              AnimLoop:
- 26   81E5 CD 15 81         call FillTrackStart
- 27   81E8
- 28   81E8                  ; This calms the tick updates by spacing them out
- 29   81E8 3A E4 81         ld a, (AnimTickDelay)
- 30   81EB FE 00            cp 0
- 31   81ED 20 08            jr nz, AnimLoopDone
- 32   81EF 3E 50            ld a, 80
- 33   81F1 32 E4 81         ld (AnimTickDelay), a
- 34   81F4
- 35   81F4                  ; Tick updates
- 36   81F4 CD 07 81         call TrackPaletteTick
- 37   81F7
- 38   81F7              AnimLoopDone:
- 39   81F7 3A E4 81         ld a, (AnimTickDelay)
- 40   81FA 3D               dec a
- 41   81FB 32 E4 81         ld (AnimTickDelay), a
- 42   81FE
- 43   81FE C3 E5 81         jp AnimLoop
- 44   8201
- 45   8201              ; Draws the * TURN BACK * text
- 46   8201 09 00 2A 20  TurnBackStr: db $9, $0, "* TURN  BACK *", $FF
- 46   8205 54 55 52 4E
- 46   8209 20 20 42 41
- 46   820D 43 4B 20 2A
- 46   8211 FF
- 47   8212              DrawString:
- 48   8212 DD 21 01 82      ld ix, TurnBackStr
- 49   8216 CD 24 80         call Print_String
- 50   8219 C9               ret
- 51   821A
- 52   821A              FillTurnBack:
- 53   821A 06 08            ld b, 8
- 54   821C 0E 00            ld c, 0
- 55   821E CD 34 82         call GetAttrAddress ; HL = address
- 56   8221
- 57   8221 0E 10            ld c, 16 ; width
- 58   8223 06 01            ld b, 1 ; height
- 59   8225 3E C2            ld a, %11000010 ; bright red, flashing
- 60   8227 CD 14 80         call Fill_Attr
- 61   822A C9               ret
- 62   822B
- 63   822B              ; fill screen with black
- 64   822B              PrepScreen:
- 65   822B 3E 47            ld a, %01000111 ; black, white "ink"
- 66   822D CD 00 80         call Clear_Screen
- 67   8230 CD 9B 22         call 8859 ; border color
- 68   8233 C9               ret
- 69   8234
- 70   8234              ; Get address of block in attribute map
- 71   8234              ; BC - XY
- 72   8234              ; address -> HL
- 73   8234              ; https://www.chibiakumas.com/z80/simplesamples.php#LessonS2
- 74   8234              GetAttrAddress:
- 75   8234 79               ld a, C
- 76   8235 E6 C0                and %11000000
- 77   8237 07                   rlca
- 78   8238 07                   rlca
- 79   8239 C6 58                add $58
- 80   823B 57                   ld d, a
- 81   823C 79               ld a, C
- 82   823D E6 38            and %00111000
- 83   823F 07               rlca
- 84   8240 07               rlca
- 85   8241
- 86   8241 80               add b
- 87   8242 5F               ld e, a
- 88   8243
- 89   8243 D5               push de
- 90   8244 E1               pop hl
- 91   8245 C9               ret
- 92   8246
- 93   8246              ; Get sprite address
- 94   8246              ; BC - XY
- 95   8246              ; DE - address
- 96   8246              ; https://www.chibiakumas.com/z80/simplesamples.php#LessonS2
- 97   8246              GetScreenPos:
- 98   8246 79               ld a, c
- 99   8247 E6 38            and %00111000
-100   8249 07               rlca
-101   824A 07               rlca
-102   824B B0               or b
-103   824C 5F               ld e, a
-104   824D 79               ld a, c
-105   824E E6 07            and %00000111
-106   8250 57               ld d, a
-107   8251 79               ld a, c
-108   8252 E6 C0            and %11000000
-109   8254 0F               rrca
-110   8255 0F               rrca
-111   8256 0F               rrca
-112   8257 B2               or d
-113   8258 F6 40            or $40
-114   825A 57               ld d, a
-115   825B C9               ret
-116   825C
-117   825C              ; Moves DE down a line
-118   825C              ; https://www.chibiakumas.com/z80/simplesamples.php#LessonS2
-119   825C              GetNextLine:
-120   825C 14               inc d
-121   825D 7A               ld a, d
-122   825E E6 07            and %00000111
-123   8260 C0               ret nz
-124   8261 7B               ld a, e
-125   8262 C6 20            add a, %00100000
-126   8264 5F               ld e, a
-127   8265 D8               ret c
-128   8266 7A               ld a, d
-129   8267 D6 08            sub %00001000
-130   8269 57               ld d, a
-131   826A C9               ret
-132   826B
-133   826B              ; HL - sprite address
-134   826B              ; DE - position address
-135   826B              ; https://www.chibiakumas.com/z80/simplesamples.php#LessonS2
-136   826B              DrawSprite:
-137   826B 06 08            ld b, 8
-138   826D              SpriteNextLine:
-139   826D 7E               ld a, (hl)
-140   826E 12               ld (de), a
-141   826F 23               inc hl
-142   8270
-143   8270 CD 5C 82         call GetNextLine
-144   8273 10 F8            djnz SpriteNextLine
-145   8275
-146   8275 C9               ret
-147   8276
-148   8276                  savesna "./main.sna", Main
+  9   8256
+ 10   8256              Main:
+ 11   8256                  ; pain incoming
+ 12   8256 CD B9 82         call PrepScreen
+ 13   8259 CD F5 80         call PrepTrack
+ 14   825C CD 58 81         call PrepSky
+ 15   825F
+ 16   825F CD BF 82         call PrepBorder
+ 17   8262
+ 18   8262 CD A8 82         call FillTurnBack
+ 19   8265 CD A0 82         call DrawString
+ 20   8268
+ 21   8268 CD 6D 82         call AnimLoop
+ 22   826B C9               ret
+ 23   826C
+ 24   826C 3C           AnimTickDelay: db 60 ; delay for tick updates
+ 25   826D
+ 26   826D              ; Animation loop!
+ 27   826D              AnimLoop:
+ 28   826D CD 15 81         call FillTrackStart
+ 29   8270 CD EA 81         call DrawStars
+ 30   8273
+ 31   8273                  ; This calms the tick updates by spacing them out
+ 32   8273 3A 6C 82         ld a, (AnimTickDelay)
+ 33   8276 FE 00            cp 0
+ 34   8278 20 0B            jr nz, AnimLoopDone
+ 35   827A 3E 3C            ld a, 60
+ 36   827C 32 6C 82         ld (AnimTickDelay), a
+ 37   827F
+ 38   827F                  ; Tick updates
+ 39   827F CD 07 81         call TrackPaletteTick
+ 40   8282 CD E2 81         call StarBlinkTick
+ 41   8285
+ 42   8285              AnimLoopDone:
+ 43   8285 3A 6C 82         ld a, (AnimTickDelay)
+ 44   8288 3D               dec a
+ 45   8289 32 6C 82         ld (AnimTickDelay), a
+ 46   828C
+ 47   828C C3 6D 82         jp AnimLoop
+ 48   828F
+ 49   828F              ; Draws the * TURN BACK * text
+ 50   828F 09 00 2A 20  TurnBackStr: db $9, $0, "* TURN  BACK *", $FF
+ 50   8293 54 55 52 4E
+ 50   8297 20 20 42 41
+ 50   829B 43 4B 20 2A
+ 50   829F FF
+ 51   82A0              DrawString:
+ 52   82A0 DD 21 8F 82      ld ix, TurnBackStr
+ 53   82A4 CD 24 80         call Print_String
+ 54   82A7 C9               ret
+ 55   82A8
+ 56   82A8              FillTurnBack:
+ 57   82A8 06 08            ld b, 8
+ 58   82AA 0E 00            ld c, 0
+ 59   82AC CD C5 82         call GetAttrAddress ; HL = address
+ 60   82AF
+ 61   82AF 0E 10            ld c, 16 ; width
+ 62   82B1 06 01            ld b, 1 ; height
+ 63   82B3 3E C2            ld a, %11000010 ; bright red, flashing
+ 64   82B5 CD 14 80         call Fill_Attr
+ 65   82B8 C9               ret
+ 66   82B9
+ 67   82B9              ; fill screen with black
+ 68   82B9              PrepScreen:
+ 69   82B9 3E 47            ld a, %01000111 ; black, white "ink"
+ 70   82BB CD 00 80         call Clear_Screen
+ 71   82BE C9               ret
+ 72   82BF
+ 73   82BF              PrepBorder:
+ 74   82BF 3E 00            ld a, %00000000
+ 75   82C1 CD 9B 22         call 8859 ; border color
+ 76   82C4 C9               ret
+ 77   82C5
+ 78   82C5
+ 79   82C5              ; Get address of block in attribute map
+ 80   82C5              ; BC - XY
+ 81   82C5              ; address -> HL
+ 82   82C5              ; https://www.chibiakumas.com/z80/simplesamples.php#LessonS2
+ 83   82C5              GetAttrAddress:
+ 84   82C5 79               ld a, C
+ 85   82C6 E6 C0                and %11000000
+ 86   82C8 07                   rlca
+ 87   82C9 07                   rlca
+ 88   82CA C6 58                add $58
+ 89   82CC 57                   ld d, a
+ 90   82CD 79               ld a, C
+ 91   82CE E6 38            and %00111000
+ 92   82D0 07               rlca
+ 93   82D1 07               rlca
+ 94   82D2
+ 95   82D2 80               add b
+ 96   82D3 5F               ld e, a
+ 97   82D4
+ 98   82D4 D5               push de
+ 99   82D5 E1               pop hl
+100   82D6 C9               ret
+101   82D7
+102   82D7              ; Get sprite address
+103   82D7              ; BC - XY
+104   82D7              ; DE - address
+105   82D7              ; https://www.chibiakumas.com/z80/simplesamples.php#LessonS2
+106   82D7              GetScreenPos:
+107   82D7 79               ld a, c
+108   82D8 E6 38            and %00111000
+109   82DA 07               rlca
+110   82DB 07               rlca
+111   82DC B0               or b
+112   82DD 5F               ld e, a
+113   82DE 79               ld a, c
+114   82DF E6 07            and %00000111
+115   82E1 57               ld d, a
+116   82E2 79               ld a, c
+117   82E3 E6 C0            and %11000000
+118   82E5 0F               rrca
+119   82E6 0F               rrca
+120   82E7 0F               rrca
+121   82E8 B2               or d
+122   82E9 F6 40            or $40
+123   82EB 57               ld d, a
+124   82EC C9               ret
+125   82ED
+126   82ED              ; Moves DE down a line
+127   82ED              ; https://www.chibiakumas.com/z80/simplesamples.php#LessonS2
+128   82ED              GetNextLine:
+129   82ED 14               inc d
+130   82EE 7A               ld a, d
+131   82EF E6 07            and %00000111
+132   82F1 C0               ret nz
+133   82F2 7B               ld a, e
+134   82F3 C6 20            add a, %00100000
+135   82F5 5F               ld e, a
+136   82F6 D8               ret c
+137   82F7 7A               ld a, d
+138   82F8 D6 08            sub %00001000
+139   82FA 57               ld d, a
+140   82FB C9               ret
+141   82FC
+142   82FC              ; HL - sprite address
+143   82FC              ; DE - position address
+144   82FC              ; https://www.chibiakumas.com/z80/simplesamples.php#LessonS2
+145   82FC              DrawSprite:
+146   82FC 06 08            ld b, 8
+147   82FE              SpriteNextLine:
+148   82FE 7E               ld a, (hl)
+149   82FF 12               ld (de), a
+150   8300 23               inc hl
+151   8301
+152   8301 CD ED 82         call GetNextLine
+153   8304 10 F8            djnz SpriteNextLine
+154   8306
+155   8306 C9               ret
+156   8307
+157   8307                  savesna "./main.sna", Main
 # file closed: main.asm
 
 Value    Label
@@ -609,7 +700,7 @@ Value    Label
 0x80CC X Print_Char_At
 0x80EC   Print_UDG8
 0x80F5   PrepTrack
-0x8234   GetAttrAddress
+0x82C5   GetAttrAddress
 0x8106   TrackPaletteOffset
 0x8107   TrackPaletteTick
 0x8111   TrackPaletteTickDone
@@ -623,15 +714,23 @@ Value    Label
 0x8184   MoonSprite01
 0x818C   MoonSprite10
 0x8194   MoonSprite11
-0x8246   GetScreenPos
-0x826B   DrawSprite
-0x81D1 X Main
-0x822B   PrepScreen
-0x821A   FillTurnBack
-0x8212   DrawString
-0x81E5   AnimLoop
-0x81E4   AnimTickDelay
-0x81F7   AnimLoopDone
-0x8201   TurnBackStr
-0x825C   GetNextLine
-0x826D   SpriteNextLine
+0x82D7   GetScreenPos
+0x82FC   DrawSprite
+0x81D1   StarsSprite0
+0x81D9   StarsSprite1
+0x81E1   StarBlinkOffset
+0x81E2   StarBlinkTick
+0x81EA   DrawStars
+0x8245   DrawStar
+0x8252   DrawStarCont
+0x8256 X Main
+0x82B9   PrepScreen
+0x82BF   PrepBorder
+0x82A8   FillTurnBack
+0x82A0   DrawString
+0x826D   AnimLoop
+0x826C   AnimTickDelay
+0x8285   AnimLoopDone
+0x828F   TurnBackStr
+0x82ED   GetNextLine
+0x82FE   SpriteNextLine
